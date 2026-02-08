@@ -31,6 +31,9 @@ async function connectDB() {
             return null;
         }
         
+        // Log connection attempt (remove in production if sensitive)
+        console.log('Attempting to connect to MongoDB...');
+        
         client = new MongoClient(process.env.MONGO_URI);
         await client.connect();
         db = client.db('emoji');
@@ -50,7 +53,9 @@ app.get('/api/leaderboard', async (req, res) => {
         
         // Check if db is still null (e.g. config error)
         if (!db) {
-            return res.status(500).json({ error: 'Database not connected' });
+            const errorMsg = 'Database connection failed: db object is null';
+            console.error(errorMsg);
+            return res.status(500).json({ error: errorMsg, details: 'Check server logs for more info' });
         }
 
         // Use aggregation to lookup member details from users collection
@@ -90,7 +95,11 @@ app.get('/api/leaderboard', async (req, res) => {
         res.json(leaderboard);
     } catch (error) {
         console.error('Error fetching leaderboard:', error);
-        res.status(500).json({ error: 'Failed to fetch leaderboard' });
+        res.status(500).json({ 
+            error: 'Failed to fetch leaderboard', 
+            message: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 

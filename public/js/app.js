@@ -10,7 +10,15 @@ async function fetchLeaderboard() {
         const response = await fetch("/api/leaderboard");
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            console.error('Server Error Response:', errorText);
+            try {
+                const errorJson = JSON.parse(errorText);
+                console.error('Server Error JSON:', errorJson);
+            } catch (e) {
+                // Ignore parse error
+            }
+            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
         }
         
         const data = await response.json();
