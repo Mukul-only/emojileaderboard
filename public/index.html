@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Emoji Charades Leaderboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  </head>
+  <body>
+    <!-- Centered Modal Overlay -->
+    <div class="mobile-modal-overlay" id="mobileModalOverlay" onclick="closeMobileModal()">
+        <!-- Filter Modal Card -->
+        <div id="filterModalCard" class="modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <span>Filter options</span>
+            </div>
+            <div class="modal-options">
+                <div class="modal-option" onclick="applyFilter('all')">Show All</div>
+                <div class="modal-option" onclick="applyFilter('top3')">Top 3 (podium)</div>
+                <div class="modal-option" onclick="applyFilter('top10')">Top 10</div>
+                <div class="modal-option" onclick="applyFilter('top20')">Top 20</div>
+                <div class="modal-option" onclick="applyFilter('active')">Active (Score > 0)</div>
+                <div class="modal-option" onclick="applyFilter('zero')">Zero Score</div>
+            </div>
+        </div>
+        
+        <!-- Sort Modal Card -->
+        <div id="sortModalCard" class="modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <span>Sort options</span>
+            </div>
+            <div class="modal-options">
+                <div class="modal-option" onclick="applySort('score_desc')">Score (High to Low)</div>
+                <div class="modal-option" onclick="applySort('score_asc')">Score (Low to High)</div>
+                <div class="modal-option" onclick="applySort('name_asc')">Name (A-Z)</div>
+                <div class="modal-option" onclick="applySort('name_desc')">Name (Z-A)</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="logo-container">
+            <div class="brand-logo">
+                <!-- Inspired by the uploaded image (M-shape / Fox-like geometry) -->
+                <svg width="45" height="45" viewBox="0 0 45 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Left Ear/Wing -->
+                    <path d="M22.5 28L12 35L5 20L12 8L22.5 18" fill="url(#grad1)" stroke="var(--accent-color)" stroke-width="1.5" stroke-linejoin="round"/>
+                    
+                    <!-- Right Ear/Wing -->
+                    <path d="M22.5 28L33 35L40 20L33 8L22.5 18" fill="url(#grad2)" stroke="var(--accent-color)" stroke-width="1.5" stroke-linejoin="round"/>
+                    
+                    <!-- Center V (Negative Space Logic) -->
+                    <path d="M22.5 18L12 8L22.5 2L33 8L22.5 18Z" fill="url(#grad3)" stroke="var(--accent-color)" stroke-width="1.5" stroke-linejoin="round" stroke-opacity="0.5"/>
+
+                    <defs>
+                        <!-- Gradient 1 (Left): Accent to Transparent -->
+                        <linearGradient id="grad1" x1="5" y1="20" x2="22.5" y2="28" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="var(--accent-color)" stop-opacity="0.3"/>
+                            <stop offset="1" stop-color="var(--accent-color)" stop-opacity="0.05"/>
+                        </linearGradient>
+                        
+                        <!-- Gradient 2 (Right): Accent to Transparent -->
+                        <linearGradient id="grad2" x1="40" y1="20" x2="22.5" y2="28" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="var(--accent-color)" stop-opacity="0.3"/>
+                            <stop offset="1" stop-color="var(--accent-color)" stop-opacity="0.05"/>
+                        </linearGradient>
+
+                        <!-- Gradient 3 (Top): Accent Glow -->
+                        <linearGradient id="grad3" x1="22.5" y1="2" x2="22.5" y2="18" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="var(--accent-color)" stop-opacity="0.1"/>
+                            <stop offset="1" stop-color="var(--accent-color)" stop-opacity="0.4"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <div class="logo-text">
+                <span style="font-weight: 800; font-size: 1.2rem; display: block; line-height: 1;">EMOJI</span>
+                <span style="font-weight: 700; font-size: 0.9rem; color: var(--accent-color); letter-spacing: 0.1em;">CHARADES</span>
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <a class="nav-item active" id="nav-leaderboard" onclick="navigateTo('leaderboard')">
+                <i data-lucide="trophy"></i> <span>Leaderboard</span>
+            </a>
+            <a class="nav-item" id="nav-analytics" onclick="navigateTo('analytics')">
+                <i data-lucide="bar-chart-2"></i> <span>Analytics</span>
+            </a>
+            <a class="nav-item" id="nav-settings" onclick="navigateTo('settings')">
+                <i data-lucide="settings"></i> <span>Settings</span>
+            </a>
+        </div>
+
+        <div class="user-mini-profile">
+            <div class="avatar">
+                <!-- Custom Avatar -->
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=AcumenGuest&backgroundColor=1f1f1f" alt="User">
+            </div>
+            <div style="font-size: 0.85rem; line-height: 1.2;">
+                <div style="color: white; font-weight: 600;">Guest User</div>
+                <div style="color: var(--text-grey); font-size: 0.75rem;">Viewer</div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Header -->
+        <header class="top-header">
+            <div class="header-left">
+                <button id="mobileMenuBtn" onclick="toggleMobileSidebar()">
+                    <i data-lucide="menu"></i>
+                </button>
+                <h2 class="header-title" id="headerTitle">Leaderboard</h2>
+                <div class="search-bar" id="topSearchBar">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="Search team, player..." onkeyup="filterLeaderboard()">
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <button class="control-btn" id="headerExportBtn" onclick="exportToCSV()" style="background: var(--accent-color); color: black; border: none; font-weight: 700; display: flex;">
+                    <i data-lucide="download"></i> Export CSV
+                </button>
+                <div class="live-badge">
+                    <span class="live-dot"></span> LIVE
+                </div>
+                
+                <div class="notification-wrapper" style="position: relative;">
+                    <button id="notifBtn" style="background:none; border:none; color:white; cursor:pointer; position: relative;" onclick="toggleNotifications()">
+                        <i data-lucide="bell"></i>
+                        <span class="nav-badge-dot"></span>
+                    </button>
+                    
+                    <div id="notificationMenu" class="notification-dropdown">
+                        <div class="notif-header">
+                            <span>Notifications</span>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span class="clear-all" onclick="clearNotifications()">Clear all</span>
+                                <button class="mobile-menu-close" onclick="closeMobileModal()"><i data-lucide="x"></i></button>
+                            </div>
+                        </div>
+                        <div class="notif-list" id="notifList">
+                            <!-- Populated by JS -->
+                            <div class="notif-item unread">
+                                <div class="notif-icon info"><i data-lucide="zap"></i></div>
+                                <div class="notif-content">
+                                    <div class="notif-title">Leaderboard Live</div>
+                                    <div class="notif-desc">Real-time updates enabled.</div>
+                                    <div class="notif-time">Just now</div>
+                                </div>
+                            </div>
+                            <div class="notif-item">
+                                <div class="notif-icon success"><i data-lucide="trophy"></i></div>
+                                <div class="notif-content">
+                                    <div class="notif-title">Competition Started</div>
+                                    <div class="notif-desc">Good luck to all teams!</div>
+                                    <div class="notif-time">2 mins ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- VIEW: Leaderboard / Dashboard -->
+        <div id="view-leaderboard" class="view-section active">
+            <div class="dashboard-grid">
+                
+                <!-- Stats Overview -->
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <span class="stat-label">Total Teams</span>
+                        <span class="stat-value" id="totalTeams">0</span>
+                        <div style="height: 4px; width: 100%; background: #222; margin-top: auto; border-radius: 2px;">
+                            <div style="height: 100%; width: 70%; background: var(--accent-color); border-radius: 2px;"></div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Highest Score</span>
+                        <span class="stat-value" id="topScore">0</span>
+                        <div style="height: 4px; width: 100%; background: #222; margin-top: auto; border-radius: 2px;">
+                            <div style="height: 100%; width: 90%; background: #10b981; border-radius: 2px;"></div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Active Players</span>
+                        <span class="stat-value" id="activePlayers">0</span>
+                        <div style="height: 4px; width: 100%; background: #222; margin-top: auto; border-radius: 2px;">
+                            <div style="height: 100%; width: 50%; background: #3b82f6; border-radius: 2px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table Card -->
+                <div class="leaderboard-wrapper">
+                    <div class="table-controls">
+                        <div style="font-weight: 700; font-size: 1.1rem; color:white;">All Teams</div>
+                        <div style="display: flex; gap: 0.8rem; position: relative;">
+                            <button class="control-btn" id="filterBtn" onclick="openFilterModal()"><i data-lucide="filter"></i> Filter</button>
+                            <button class="control-btn" id="sortBtn" onclick="openSortModal()"><i data-lucide="arrow-up-down"></i> Sort</button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-header">
+                        <div>Rank</div>
+                        <div>Team Name</div>
+                        <div>Members</div>
+                        <div style="text-align:right">Score</div>
+                        <div style="text-align:right">Trend</div>
+                    </div>
+
+                    <div id="leaderboardRows" class="table-rows">
+                        <!-- Skeletons for initial load -->
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    
+                    <div id="updateStatusText" style="padding: 1rem; border-top: 1px solid var(--card-border); text-align: center; font-size: 0.85rem; color: var(--text-grey); background: rgba(0,0,0,0.2);">
+                        Updates every 5 seconds
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: Analytics -->
+        <div id="view-analytics" class="view-section">
+            <div class="dashboard-grid">                
+                <!-- KPIs -->
+                <div class="kpi-grid">
+                    <div class="kpi-item">
+                        <div class="kpi-value" id="avgScore">0</div>
+                        <div class="kpi-label">Average Score</div>
+                    </div>
+                    <div class="kpi-item">
+                        <div class="kpi-value" id="medianScore">0</div>
+                        <div class="kpi-label">Median Score</div>
+                    </div>
+                    <div class="kpi-item">
+                        <div class="kpi-value" id="highestRank">0</div>
+                        <div class="kpi-label">Max Score</div>
+                    </div>
+                    <div class="kpi-item">
+                        <div class="kpi-value" id="totalParticipants">0</div>
+                        <div class="kpi-label">Total Participants</div>
+                    </div>
+                </div>
+
+                <div class="charts-container">
+                    <!-- Top 5 Teams Performance -->
+                    <div class="chart-card">
+                        <div class="chart-title">Top 5 Teams Performance</div>
+                        <div class="bar-chart" id="topTeamsChart">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Score Distribution -->
+                    <div class="chart-card">
+                        <div class="chart-title">Score Distribution</div>
+                        <div class="bar-chart" id="distributionChart">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: Settings -->
+        <div id="view-settings" class="view-section">
+            <div class="dashboard-grid">
+                <div class="settings-container">
+                    <!-- Appearance -->
+                    <div class="settings-card">
+                        <div class="settings-header">
+                            <h3>Appearance</h3>
+                            <p>Select a color theme for the dashboard.</p>
+                        </div>
+                        <div class="theme-grid">
+                            <div class="theme-option active" onclick="setTheme('default', this)">
+                                <div class="theme-preview" style="background: #0D0D0D;">
+                                    <div style="position:absolute; bottom:0; left:0; right:0; height:4px; background:#ADFF2F;"></div>
+                                </div>
+                                <div class="theme-name">Neon Lime</div>
+                            </div>
+                            <div class="theme-option" onclick="setTheme('cyber', this)">
+                                <div class="theme-preview" style="background: #090014;">
+                                    <div style="position:absolute; bottom:0; left:0; right:0; height:4px; background:#FF00FF;"></div>
+                                </div>
+                                <div class="theme-name">Cyberpunk</div>
+                            </div>
+                            <div class="theme-option" onclick="setTheme('aqua', this)">
+                                <div class="theme-preview" style="background: #001219;">
+                                    <div style="position:absolute; bottom:0; left:0; right:0; height:4px; background:#00FFFF;"></div>
+                                </div>
+                                <div class="theme-name">Oceanic</div>
+                            </div>
+                            <div class="theme-option" onclick="setTheme('flame', this)">
+                                <div class="theme-preview" style="background: #110500;">
+                                    <div style="position:absolute; bottom:0; left:0; right:0; height:4px; background:#FF4500;"></div>
+                                </div>
+                                <div class="theme-name">Inferno</div>
+                            </div>
+                            <div class="theme-option" onclick="setTheme('violet', this)">
+                                <div class="theme-preview" style="background: #1a0b2e;">
+                                    <div style="position:absolute; bottom:0; left:0; right:0; height:4px; background:#d946ef;"></div>
+                                </div>
+                                <div class="theme-name">Royal Violet</div>
+                            </div>
+                            <div class="theme-option" onclick="setTheme('toxic', this)">
+                                <div class="theme-preview" style="background: #051a05;">
+                                    <div style="position:absolute; bottom:0; left:0; right:0; height:4px; background:#00ff00;"></div>
+                                </div>
+                                <div class="theme-name">Toxic Green</div>
+                            </div>
+                            <div class="theme-option" onclick="setTheme('slate', this)">
+                                <div class="theme-preview" style="background: #0f172a;">
+                                    <div style="position:absolute; bottom:0; left:0; right:0; height:4px; background:#38bdf8;"></div>
+                                </div>
+                                <div class="theme-name">Slate Blue</div>
+                            </div>
+                            <div class="theme-option" onclick="setTheme('gold', this)">
+                                <div class="theme-preview" style="background: #1c1917;">
+                                    <div style="position:absolute; bottom:0; left:0; right:0; height:4px; background:#fbbf24;"></div>
+                                </div>
+                                <div class="theme-name">Golden Hour</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preferences -->
+                    <div class="settings-card">
+                        <div class="settings-header">
+                            <h3>Leaderboard Preferences</h3>
+                            <p>Control data updates and visuals.</p>
+                        </div>
+                        
+                        <div class="pref-item">
+                            <div class="pref-info">
+                                <h4>Auto-Refresh</h4>
+                                <p>Automatically fetch new leaderboard data.</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="autoRefreshToggle" checked onchange="toggleAutoRefresh(this)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="pref-item">
+                            <div class="pref-info">
+                                <h4>Refresh Interval</h4>
+                                <p>How often to check for updates.</p>
+                            </div>
+                            <div class="custom-select" id="refreshRateSelect">
+                                <div class="select-trigger" onclick="toggleSelect(this)">
+                                    <span class="selected-value">Normal (5s)</span>
+                                    <i data-lucide="chevron-down"></i>
+                                </div>
+                                <div class="select-options">
+                                    <div class="select-option" onclick="selectOption(this, 2000)">Fast (2s)</div>
+                                    <div class="select-option selected" onclick="selectOption(this, 5000)">Normal (5s)</div>
+                                    <div class="select-option" onclick="selectOption(this, 10000)">Slow (10s)</div>
+                                    <div class="select-option" onclick="selectOption(this, 30000)">Very Slow (30s)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pref-item">
+                            <div class="pref-info">
+                                <h4>UI Animations</h4>
+                                <p>Enable smooth transitions and glow effects.</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="animationsToggle" checked onchange="toggleAnimations(this)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="pref-item">
+                            <div class="pref-info">
+                                <h4>Presentation Mode</h4>
+                                <p>Hide sidebar/controls for big screens.</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="presentationModeToggle" onchange="togglePresentationMode(this)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="pref-item">
+                            <div class="pref-info">
+                                <h4>Compact Mode</h4>
+                                <p>Reduce padding for higher data density.</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="compactModeToggle" onchange="toggleCompactMode(this)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav" id="mobileBottomNav">
+        <a class="bottom-nav-item active" id="bottom-nav-leaderboard" onclick="navigateTo('leaderboard')">
+            <i data-lucide="trophy"></i>
+            <span>Leaderboard</span>
+        </a>
+        <a class="bottom-nav-item" id="bottom-nav-analytics" onclick="navigateTo('analytics')">
+            <i data-lucide="bar-chart-2"></i>
+            <span>Analytics</span>
+        </a>
+        <a class="bottom-nav-item" id="bottom-nav-settings" onclick="navigateTo('settings')">
+            <i data-lucide="settings"></i>
+            <span>Settings</span>
+        </a>
+    </nav>
+
+    <!-- Exit Presentation Mode Button -->
+    <button id="exitPresentationBtn" onclick="exitPresentationMode()" title="Exit Presentation Mode">
+        <i data-lucide="minimize-2"></i>
+    </button>
+
+    <!-- Scripts -->
+    <script src="js/analytics.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        function exitPresentationMode() {
+            document.body.classList.remove('presentation-mode');
+            // Uncheck the toggle in settings
+            const toggle = document.getElementById('presentationModeToggle');
+            if (toggle) toggle.checked = false;
+        }
+    </script>
+  </body>
+</html>
